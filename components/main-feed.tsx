@@ -8,11 +8,13 @@ import { useThemeLanguage } from '@/lib/use-theme-language'
 import { getTranslations } from '@/lib/i18n'
 import Navigation from './navigation'
 import PaymentModal from './payment-modal'
+import QRModal from './qr-modal'
 import TransactionFeed from './transaction-feed'
 
 export default function MainFeed({ user }: { user: any }) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [showModal, setShowModal] = useState(false)
+  const [showQRModal, setShowQRModal] = useState(false)
   const [loading, setLoading] = useState(true)
   const { language } = useThemeLanguage()
   const t = getTranslations(language)
@@ -134,6 +136,15 @@ export default function MainFeed({ user }: { user: any }) {
         </div>
       </main>
 
+      <button
+        onClick={() => setShowQRModal(true)}
+        className="fixed bottom-6 left-6 flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl z-30 active:scale-95 transform"
+        title="QR Code"
+        aria-label="Show QR Code"
+      >
+        <span className="text-lg sm:text-xl font-bold">QR</span>
+      </button>
+
       {/* Floating Action Button - Fixed bottom-right on mobile */}
       <button
         onClick={() => setShowModal(true)}
@@ -145,6 +156,7 @@ export default function MainFeed({ user }: { user: any }) {
       </button>
 
       {showModal && <PaymentModal onClose={() => setShowModal(false)} user={user} />}
+      {showQRModal && <QRModal onClose={() => setShowQRModal(false)} user={user} />}
     </div>
   )
 }
