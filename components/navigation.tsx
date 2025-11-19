@@ -8,6 +8,7 @@ import Link from 'next/link'
 
 export default function Navigation({ user }: { user: any }) {
   const [showMenu, setShowMenu] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -17,18 +18,25 @@ export default function Navigation({ user }: { user: any }) {
 
   return (
     <nav className="bg-card border-b border-border sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/" className="text-xl font-serif font-bold text-foreground">
+      <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
+        <Link href="/" className="text-lg sm:text-xl font-serif font-bold text-foreground">
           Banuhashim
         </Link>
 
-        <div className="flex items-center gap-6">
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-6">
           <Link
             href="/"
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Feed
           </Link>
+          {/* <Link
+            href="/directory"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Directory
+          </Link> */}
           <Link
             href="/transactions"
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -41,6 +49,12 @@ export default function Navigation({ user }: { user: any }) {
           >
             My Payments
           </Link>
+          <Link
+            href="/settings"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Settings
+          </Link>
 
           <div className="relative">
             <button
@@ -50,7 +64,7 @@ export default function Navigation({ user }: { user: any }) {
               <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-xs font-bold text-accent-foreground">
                 {user?.displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
               </div>
-              <span className="text-xs">{user?.displayName || 'User'}</span>
+              <span className="hidden sm:inline text-xs">{user?.displayName || 'User'}</span>
             </button>
 
             {showMenu && (
@@ -74,7 +88,74 @@ export default function Navigation({ user }: { user: any }) {
             )}
           </div>
         </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-2 text-muted-foreground hover:text-foreground"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-card border-t border-border p-4 space-y-3">
+          <Link
+            href="/"
+            className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Feed
+          </Link>
+          {/* <Link
+            href="/directory"
+            className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Directory
+          </Link> */}
+          <Link
+            href="/transactions"
+            className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Transactions
+          </Link>
+          <Link
+            href="/account"
+            className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            My Payments
+          </Link>
+          <Link
+            href="/settings"
+            className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Settings
+          </Link>
+          <Link
+            href="/profile"
+            className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Profile
+          </Link>
+          <button
+            onClick={() => {
+              handleLogout()
+              setMobileMenuOpen(false)
+            }}
+            className="block w-full text-left text-sm text-destructive hover:text-destructive/80 transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
+      )}
     </nav>
   )
 }
