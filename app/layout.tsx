@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import ThemeLanguageProvider from '@/components/theme-language-provider'
+import { AdminModeProvider } from '@/lib/admin-context'
 import PWAInstallPrompt from '@/components/pwa-install-prompt'
 import PWAServiceWorker from '@/components/pwa-service-worker'
 import './globals.css'
@@ -61,10 +62,12 @@ export default function RootLayout({
       </head>
       <body className={`font-sans antialiased ${_playfair.variable}`}>
         <ThemeLanguageProvider>
+          <AdminModeProvider>
           {children}
           <PWAInstallPrompt />
           <PWAServiceWorker />
           <Analytics />
+          </AdminModeProvider>
         </ThemeLanguageProvider>
       </body>
     </html>

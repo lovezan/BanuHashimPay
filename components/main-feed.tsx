@@ -3,19 +3,26 @@
 import { useEffect, useState } from "react"
 import { query, collection, orderBy, onSnapshot } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import type { Transaction } from "@/lib/types"
+import type { Transaction, User } from "@/lib/types"
 import { useThemeLanguage } from "@/lib/use-theme-language"
 import { getTranslations } from "@/lib/i18n"
 import Navigation from "./navigation"
 import PaymentModal from "./payment-modal"
 import QRModal from "./qr-modal"
 import TransactionFeed from "./transaction-feed"
+import Link from "next/link"
+import { isSuperAdmin } from "@/lib/admin"
+import { useAdminMode } from "@/lib/admin-context"
 
 export default function MainFeed({ user }: { user: any }) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [users, setUsers] = useState<Record<string, User>>({})
   const [showModal, setShowModal] = useState(false)
   const [showQRModal, setShowQRModal] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [paymentTarget, setPaymentTarget] = useState<{ userId: string; userName: string } | null>(null)
+  const { adminMode } = useAdminMode()
+  const isAdmin = isSuperAdmin(user?.email) && adminMode
   const { language } = useThemeLanguage()
   const t = getTranslations(language)
 
@@ -45,7 +52,46 @@ export default function MainFeed({ user }: { user: any }) {
     return () => unsubscribe()
   }, [])
 
-  const currentMonth = new Date().toLocaleString("default", { month: "long", year: "numeric" })
+  useEffect(() => {
+    const q = query(collection(db, "users"))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const usersMap: Record<string, User> = {}
+      snapshot.docs.forEach((doc) => {
+        usersMap[doc.id] = doc.data() as User
+      })
+      setUsers(usersMap)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  const now = new Date()
+  const currentMonth = now.toLocaleString("default", { month: "long", year: "numeric" })
+
+  const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const prevMonth = prevMonthDate.toLocaleString("default", { month: "long", year: "numeric" })
+
+  // Build complete member list from transactions + users collection
+  const allMembersMap: Record<string, { displayName: string; role: string }> = {}
+  transactions.forEach((txn) => {
+    if (!allMembersMap[txn.userId]) {
+      allMembersMap[txn.userId] = { displayName: txn.userName, role: "member" }
+    }
+  })
+  Object.entries(users).forEach(([id, u]) => {
+    allMembersMap[id] = { displayName: u.displayName || allMembersMap[id]?.displayName || "Unknown", role: u.role }
+  })
+  const allMembers = Object.entries(allMembersMap)
+
+  const paidLastMonth = new Set(
+    transactions
+      .filter((txn) => {
+        const txnDate = typeof txn.timestamp === "string" ? new Date(txn.timestamp) : txn.timestamp
+        return txnDate.toLocaleString("default", { month: "long", year: "numeric" }) === prevMonth
+      })
+      .map((txn) => txn.userId)
+  )
+
+  const unpaidLastMonth = allMembers.filter(([id]) => !paidLastMonth.has(id))
 
   const monthlyTotal = transactions
     .filter((txn) => {
@@ -75,7 +121,7 @@ export default function MainFeed({ user }: { user: any }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3 bg-gradient-to-br from-accent/10 to-accent/5 border border-accent/30 rounded-lg hover:border-accent/50 transition-colors">
                   <p className="text-xs sm:text-sm text-muted-foreground mb-1">Monthly Requirement</p>
-                  <p className="text-lg sm:text-xl font-bold text-accent">₹20</p>
+                  <p className="text-lg sm:text-xl font-bold text-accent">₹30</p>
                 </div>
                 <div className="p-3 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-lg hover:border-primary/50 transition-colors">
                   <p className="text-xs sm:text-sm text-muted-foreground mb-1">System Purpose</p>
@@ -85,13 +131,49 @@ export default function MainFeed({ user }: { user: any }) {
             </div>
           </div>
 
+          {/* Leadership */}
+          {(() => {
+            const president = Object.entries(allMembersMap).find(([, m]) => m.role === "president")
+            const vp = Object.entries(allMembersMap).find(([, m]) => m.role === "vice-president")
+            if (!president && !vp) return null
+            return (
+              <div className="bg-card border border-border rounded-lg p-4 sm:p-5">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Society Leadership</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {president && (
+                    <div className="flex items-center gap-3 p-3 bg-accent/5 border border-accent/20 rounded-lg">
+                      <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-sm font-bold text-accent flex-shrink-0">
+                        {president[1].displayName?.[0]?.toUpperCase() || "P"}
+                      </div>
+                      <div>
+                        <p className="text-xs text-accent font-bold uppercase tracking-wider">President</p>
+                        <p className="text-sm font-semibold text-foreground">{president[1].displayName}</p>
+                      </div>
+                    </div>
+                  )}
+                  {vp && (
+                    <div className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
+                        {vp[1].displayName?.[0]?.toUpperCase() || "V"}
+                      </div>
+                      <div>
+                        <p className="text-xs text-primary font-bold uppercase tracking-wider">Vice President</p>
+                        <p className="text-sm font-semibold text-foreground">{vp[1].displayName}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+
           {/* System Description */}
           <div className="bg-card border border-border rounded-lg p-4 sm:p-6 hover:shadow-lg transition-shadow">
             <h2 className="text-lg sm:text-xl font-serif font-bold text-foreground mb-3">How It Works</h2>
             <ul className="space-y-2 text-sm sm:text-base text-muted-foreground">
               <li className="flex gap-3">
                 <span className="text-accent font-bold flex-shrink-0">•</span>
-                <span>Each member contributes ₹20 monthly for society operations</span>
+                <span>Each member contributes ₹30 monthly for society operations</span>
               </li>
               <li className="flex gap-3">
                 <span className="text-accent font-bold flex-shrink-0">•</span>
@@ -168,6 +250,67 @@ export default function MainFeed({ user }: { user: any }) {
           </div>
         </div>
 
+        {/* Previous Month Unpaid Members */}
+        {!loading && allMembers.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg sm:text-2xl font-serif font-bold text-foreground">
+                Unpaid — {prevMonth}
+              </h2>
+              <Link
+                href="/unpaid"
+                className="text-xs sm:text-sm text-accent hover:underline font-medium"
+              >
+                Full Tracker →
+              </Link>
+            </div>
+
+            {unpaidLastMonth.length === 0 ? (
+              <div className="bg-card border border-border rounded-lg p-4 text-center">
+                <p className="text-sm text-green-500 font-medium">All members paid for {prevMonth}!</p>
+              </div>
+            ) : (
+              <div className="bg-card border border-destructive/30 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm text-muted-foreground">
+                    <span className="text-destructive font-bold">{unpaidLastMonth.length}</span> of{" "}
+                    {allMembers.length} members haven't paid
+                  </p>
+                  <span className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded-full font-medium">
+                    ₹{(unpaidLastMonth.length * 30).toFixed(0)} pending
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {unpaidLastMonth.map(([id, member]) => (
+                    <div
+                      key={id}
+                      className="flex items-center gap-3 p-2 bg-destructive/5 border border-destructive/20 rounded-md"
+                    >
+                      <div className="w-7 h-7 rounded-full bg-destructive/20 flex items-center justify-center text-xs font-bold text-destructive flex-shrink-0">
+                        {member.displayName?.[0]?.toUpperCase() || "?"}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground truncate">{member.displayName}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{member.role}</p>
+                      </div>
+                      {isAdmin ? (
+                        <button
+                          onClick={() => setPaymentTarget({ userId: id, userName: member.displayName })}
+                          className="flex-shrink-0 text-xs font-bold text-accent-foreground bg-accent hover:bg-accent/80 px-2 py-1 rounded transition-colors"
+                        >
+                          + Add
+                        </button>
+                      ) : (
+                        <span className="ml-auto text-xs text-destructive font-bold flex-shrink-0">₹30 due</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Recent Transactions */}
         <div className="mb-6">
           <h2 className="text-lg sm:text-2xl font-serif font-bold text-foreground mb-4">Recent Transactions</h2>
@@ -207,6 +350,14 @@ export default function MainFeed({ user }: { user: any }) {
       </button>
 
       {showModal && <PaymentModal onClose={() => setShowModal(false)} user={user} />}
+      {paymentTarget && (
+        <PaymentModal
+          onClose={() => setPaymentTarget(null)}
+          user={user}
+          preSelectedMember={paymentTarget}
+          preSelectedReason={`Monthly dues ${prevMonth}`}
+        />
+      )}
       {showQRModal && <QRModal onClose={() => setShowQRModal(false)} user={user} />}
     </div>
   )

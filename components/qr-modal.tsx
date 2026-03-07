@@ -59,7 +59,7 @@ export default function QRModal({ onClose, user }: QRModalProps) {
             <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
               <img
                 ref={qrImageRef}
-                src="/qr-code.jpeg"
+                src="/qr-code.webp"
                 alt="QR Code"
                 className="w-48 h-48 sm:w-56 sm:h-56 object-contain"
               />
@@ -72,7 +72,7 @@ export default function QRModal({ onClose, user }: QRModalProps) {
               {language === 'ur' ? 'UPI ID' : language === 'ar' ? 'معرف UPI' : 'UPI ID'}
             </p>
             <p className="text-sm sm:text-base font-medium text-foreground break-all">
-              talibhassan1122@oksbi
+              talibhassan1122-2@okicici
             </p>
           </div>
 

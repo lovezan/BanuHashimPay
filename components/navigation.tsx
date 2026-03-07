@@ -5,11 +5,16 @@ import { signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { isSuperAdmin } from '@/lib/admin'
+import { useAdminMode } from '@/lib/admin-context'
+import { AnimatedThemeToggler } from './animated-theme-toggler'
 
 export default function Navigation({ user }: { user: any }) {
   const [showMenu, setShowMenu] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
+  const { adminMode, toggleAdminMode } = useAdminMode()
+  const canToggleAdmin = isSuperAdmin(user?.email)
 
   const handleLogout = async () => {
     await signOut(auth)
@@ -50,11 +55,38 @@ export default function Navigation({ user }: { user: any }) {
             My Payments
           </Link>
           <Link
-            href="/settings"
+            href="/unpaid"
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            Settings
+            Unpaid
           </Link>
+
+          {/* Dark / Light mode toggle */}
+          <AnimatedThemeToggler />
+
+          {canToggleAdmin && adminMode && (
+            <Link
+              href="/admin"
+              className="text-sm text-accent font-medium hover:text-foreground transition-colors"
+            >
+              Manage Roles
+            </Link>
+          )}
+
+          {canToggleAdmin && (
+            <button
+              onClick={toggleAdminMode}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                adminMode
+                  ? 'bg-accent text-accent-foreground border-accent shadow-md'
+                  : 'bg-secondary text-muted-foreground border-border hover:border-accent/50'
+              }`}
+              title={adminMode ? 'Admin mode ON — click to switch to normal view' : 'Click to enable admin mode'}
+            >
+              <span className={`w-2 h-2 rounded-full ${adminMode ? 'bg-accent-foreground' : 'bg-muted-foreground'}`}></span>
+              {adminMode ? 'Admin ON' : 'Admin OFF'}
+            </button>
+          )}
 
           <div className="relative">
             <button
@@ -132,11 +164,11 @@ export default function Navigation({ user }: { user: any }) {
             My Payments
           </Link>
           <Link
-            href="/settings"
+            href="/unpaid"
             className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
             onClick={() => setMobileMenuOpen(false)}
           >
-            Settings
+            Unpaid
           </Link>
           <Link
             href="/profile"
@@ -145,6 +177,31 @@ export default function Navigation({ user }: { user: any }) {
           >
             Profile
           </Link>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Theme</span>
+            <AnimatedThemeToggler onClick={() => setMobileMenuOpen(false)} />
+          </div>
+          {canToggleAdmin && adminMode && (
+            <Link
+              href="/admin"
+              className="block text-sm text-accent font-medium hover:text-foreground transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Manage Roles
+            </Link>
+          )}
+          {canToggleAdmin && (
+            <button
+              onClick={() => { toggleAdminMode(); setMobileMenuOpen(false) }}
+              className={`w-full text-left text-sm font-semibold px-3 py-2 rounded transition-colors ${
+                adminMode
+                  ? 'bg-accent/20 text-accent'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {adminMode ? 'Admin Mode: ON (tap to disable)' : 'Admin Mode: OFF (tap to enable)'}
+            </button>
+          )}
           <button
             onClick={() => {
               handleLogout()

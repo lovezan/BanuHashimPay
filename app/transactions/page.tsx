@@ -100,7 +100,7 @@ export default function TransactionsPage() {
                   </p>
                 </div>
                 
-                <div className="space-y-2 max-h-64 overflow-y-auto">
+                <div className="space-y-2 max-h-64 overflow-y-auto themed-scroll pr-1">
                   {userTransactions.map((txn) => (
                     <div key={txn.id} className="text-xs bg-background/50 p-2 rounded">
                       <div className="flex justify-between items-start">

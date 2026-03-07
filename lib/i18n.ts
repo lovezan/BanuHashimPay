@@ -3,9 +3,9 @@
 export const translations = {
     en: {
       monthlyPayment: 'Monthly Payment Requirement',
-      amountDue: '₹20 per month',
+      amountDue: '₹30 per month',
       societyName: 'Banuhashim Society',
-      description: 'Track all society payments and contributions. Every member is required to contribute ₹20 monthly along with any additional donations or payments.',
+      description: 'Track all society payments and contributions. Every member is required to contribute ₹30 monthly along with any additional donations or payments.',
       navigation: {
         home: 'Home',
         transactions: 'Transactions',

@@ -17,6 +17,7 @@ next-env.d.ts
 # Production
 /build
 /dist
+/RAZORPAY_INTEGRATION.md
 
 # Misc
 .DS_Store
