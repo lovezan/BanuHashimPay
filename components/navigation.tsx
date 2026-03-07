@@ -121,15 +121,18 @@ export default function Navigation({ user }: { user: any }) {
           </div>
         </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 text-muted-foreground hover:text-foreground"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
+        {/* Mobile: theme toggle + menu button (outside menu) */}
+        <div className="md:hidden flex items-center gap-1">
+          <AnimatedThemeToggler />
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 text-muted-foreground hover:text-foreground"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
@@ -177,10 +180,6 @@ export default function Navigation({ user }: { user: any }) {
           >
             Profile
           </Link>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Theme</span>
-            <AnimatedThemeToggler onClick={() => setMobileMenuOpen(false)} />
-          </div>
           {canToggleAdmin && adminMode && (
             <Link
               href="/admin"
