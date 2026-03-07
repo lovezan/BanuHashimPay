@@ -21,6 +21,7 @@ export default function MainFeed({ user }: { user: any }) {
   const [showQRModal, setShowQRModal] = useState(false)
   const [loading, setLoading] = useState(true)
   const [paymentTarget, setPaymentTarget] = useState<{ userId: string; userName: string } | null>(null)
+  const [editTarget, setEditTarget] = useState<Transaction | null>(null)
   const { adminMode } = useAdminMode()
   const isAdmin = isSuperAdmin(user?.email) && adminMode
   const { language } = useThemeLanguage()
@@ -324,7 +325,7 @@ export default function MainFeed({ user }: { user: any }) {
               <p className="text-sm sm:text-base text-muted-foreground">No transactions yet. Add your first payment!</p>
             </div>
           ) : (
-            <TransactionFeed transactions={transactions} />
+            <TransactionFeed transactions={transactions} isAdmin={isAdmin} onEdit={(txn) => setEditTarget(txn)} />
           )}
         </div>
       </main>
@@ -350,12 +351,20 @@ export default function MainFeed({ user }: { user: any }) {
       </button>
 
       {showModal && <PaymentModal onClose={() => setShowModal(false)} user={user} />}
+      {editTarget && (
+        <PaymentModal
+          onClose={() => setEditTarget(null)}
+          user={user}
+          editTransaction={editTarget}
+        />
+      )}
       {paymentTarget && (
         <PaymentModal
           onClose={() => setPaymentTarget(null)}
           user={user}
           preSelectedMember={paymentTarget}
           preSelectedReason={`Monthly dues ${prevMonth}`}
+          targetMonth={prevMonthDate}
         />
       )}
       {showQRModal && <QRModal onClose={() => setShowQRModal(false)} user={user} />}

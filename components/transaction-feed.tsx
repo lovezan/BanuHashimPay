@@ -5,9 +5,11 @@ import { format, parse } from 'date-fns'
 
 interface TransactionFeedProps {
   transactions: Transaction[]
+  isAdmin?: boolean
+  onEdit?: (txn: Transaction) => void
 }
 
-export default function TransactionFeed({ transactions }: TransactionFeedProps) {
+export default function TransactionFeed({ transactions, isAdmin, onEdit }: TransactionFeedProps) {
   // Group transactions by month
   const grouped = transactions.reduce((acc, txn) => {
     const date = new Date(txn.timestamp)
@@ -52,7 +54,18 @@ export default function TransactionFeed({ transactions }: TransactionFeedProps) 
                     {format(new Date(txn.timestamp), 'MMM d, yyyy • h:mm a')}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="flex flex-col items-end gap-1">
+                  {isAdmin && onEdit && (
+                    <button
+                      onClick={() => onEdit(txn)}
+                      className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                      title="Edit transaction"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                  )}
                   <p className="text-lg font-serif font-semibold text-accent">
                     +₹{txn.amount}
                   </p>
