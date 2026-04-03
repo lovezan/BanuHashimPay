@@ -22,6 +22,7 @@ export default function MainFeed({ user }: { user: any }) {
   const [showQRModal, setShowQRModal] = useState(false)
   const [loading, setLoading] = useState(true)
   const [paymentTarget, setPaymentTarget] = useState<{ userId: string; userName: string } | null>(null)
+  const [editTarget, setEditTarget] = useState<Transaction | null>(null)
   const { adminMode } = useAdminMode()
   const isAdmin = isSuperAdmin(user?.email) && adminMode
   const { language } = useThemeLanguage()
@@ -130,14 +131,14 @@ export default function MainFeed({ user }: { user: any }) {
                   <p className="text-xs sm:text-sm text-muted-foreground mb-1">Monthly Requirement</p>
                   {isAdmin ? (
                     <div className="flex items-center">
-                       <span className="text-lg sm:text-xl font-bold text-accent">₹</span>
-                       <input 
-                         type="number"
-                         value={editAmount}
-                         onChange={(e) => setEditAmount(e.target.value)}
-                         onBlur={(e) => updateMonthlyAmount(Number(e.target.value) || monthlyAmount)}
-                         className="w-16 bg-transparent border-b border-accent/30 focus:border-accent outline-none text-lg sm:text-xl font-bold text-accent ml-0.5"
-                       />
+                      <span className="text-lg sm:text-xl font-bold text-accent">₹</span>
+                      <input
+                        type="number"
+                        value={editAmount}
+                        onChange={(e) => setEditAmount(e.target.value)}
+                        onBlur={(e) => updateMonthlyAmount(Number(e.target.value) || monthlyAmount)}
+                        className="w-16 bg-transparent border-b border-accent/30 focus:border-accent outline-none text-lg sm:text-xl font-bold text-accent ml-0.5"
+                      />
                     </div>
                   ) : (
                     <p className="text-lg sm:text-xl font-bold text-accent">₹{monthlyAmount}</p>
@@ -343,7 +344,7 @@ export default function MainFeed({ user }: { user: any }) {
               <p className="text-sm sm:text-base text-muted-foreground">No transactions yet. Add your first payment!</p>
             </div>
           ) : (
-            <TransactionFeed transactions={transactions} />
+            <TransactionFeed transactions={transactions} isAdmin={isAdmin} onEdit={(txn) => setEditTarget(txn)} />
           )}
         </div>
       </main>

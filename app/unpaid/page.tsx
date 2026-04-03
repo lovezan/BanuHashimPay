@@ -52,7 +52,8 @@ export default function UnpaidPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedMonth, setSelectedMonth] = useState<string>("")
-  const [paymentTarget, setPaymentTarget] = useState<{ userId: string; userName: string } | null>(null)
+  const [paymentTarget, setPaymentTarget] = useState<{ userId: string; userName: string; targetMonth: Date } | null>(null)
+  const [editTarget, setEditTarget] = useState<Transaction | null>(null)
   const router = useRouter()
   const { adminMode } = useAdminMode()
   const isAdmin = isSuperAdmin(user?.email) && adminMode
@@ -185,11 +186,10 @@ export default function UnpaidPage() {
                 <button
                   key={key}
                   onClick={() => setSelectedMonth(key)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    selectedMonth === key
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedMonth === key
                       ? "bg-accent text-accent-foreground"
                       : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-accent/50"
-                  }`}
+                    }`}
                 >
                   {key}
                 </button>
@@ -351,9 +351,22 @@ export default function UnpaidPage() {
                           <p className="text-xs text-muted-foreground capitalize">{member.role}</p>
                           <p className="text-xs text-muted-foreground truncate">{member.email}</p>
                         </div>
-                        <span className="text-xs font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded flex-shrink-0">
-                          ₹{memberTotal.toFixed(0)} paid
-                        </span>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          {isAdmin && latestTxn && (
+                            <button
+                              onClick={() => setEditTarget(latestTxn)}
+                              className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                              title="Edit payment"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                          )}
+                          <span className="text-xs font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded">
+                            ₹{memberTotal.toFixed(0)} paid
+                          </span>
+                        </div>
                       </div>
                     )
                   })}

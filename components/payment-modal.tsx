@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { addDoc, collection, onSnapshot, query } from 'firebase/firestore'
+import { addDoc, collection, doc, onSnapshot, query, updateDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { isSuperAdmin } from '@/lib/admin'
 import { useAdminMode } from '@/lib/admin-context'
+import type { Transaction } from '@/lib/types'
 
 interface PaymentModalProps {
   onClose: () => void
@@ -28,8 +29,8 @@ export default function PaymentModal({ onClose, user, preSelectedMember, preSele
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [members, setMembers] = useState<MemberOption[]>([])
-  const [selectedUserId, setSelectedUserId] = useState<string>(preSelectedMember?.userId || user.uid)
-  const [selectedUserName, setSelectedUserName] = useState<string>(preSelectedMember?.userName || user.displayName || user.email)
+  const [selectedUserId, setSelectedUserId] = useState<string>(editTransaction?.userId || preSelectedMember?.userId || user.uid)
+  const [selectedUserName, setSelectedUserName] = useState<string>(editTransaction?.userName || preSelectedMember?.userName || user.displayName || user.email)
 
   const { adminMode } = useAdminMode()
   const isAdmin = isSuperAdmin(user.email) && adminMode
@@ -85,8 +86,8 @@ export default function PaymentModal({ onClose, user, preSelectedMember, preSele
       }
 
       const amountValue = parseFloat(amount)
-      if (amountValue <= 0) {
-        setError('Amount must be greater than 0')
+      if (amountValue < 0) {
+        setError('Amount cannot be negative')
         setLoading(false)
         return
       }
@@ -120,7 +121,7 @@ export default function PaymentModal({ onClose, user, preSelectedMember, preSele
       <div className="bg-card rounded-lg border border-border p-6 w-full max-w-md shadow-lg animate-in fade-in zoom-in-95">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-serif font-bold text-foreground">
-            {isAdmin ? 'Add Payment (Admin)' : 'Add Payment'}
+            {editTransaction ? 'Edit Payment' : isAdmin ? 'Add Payment (Admin)' : 'Add Payment'}
           </h2>
           {isAdmin && (
             <span className="text-xs bg-accent/20 text-accent px-2 py-1 rounded-full font-medium">
@@ -134,15 +135,15 @@ export default function PaymentModal({ onClose, user, preSelectedMember, preSele
           {isAdmin && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Adding Payment For
+                {editTransaction ? 'Member' : 'Adding Payment For'}
               </label>
-              {preSelectedMember ? (
+              {(preSelectedMember || editTransaction) ? (
                 <div className="w-full bg-background border border-accent/40 rounded-md px-3 py-2 text-sm text-foreground flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-xs font-bold text-accent flex-shrink-0">
-                    {preSelectedMember.userName[0]?.toUpperCase()}
+                    {selectedUserName[0]?.toUpperCase()}
                   </div>
-                  <span className="font-medium">{preSelectedMember.userName}</span>
-                  <span className="ml-auto text-xs text-muted-foreground">pre-selected</span>
+                  <span className="font-medium">{selectedUserName}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">{editTransaction ? 'locked' : 'pre-selected'}</span>
                 </div>
               ) : (
                 <select
