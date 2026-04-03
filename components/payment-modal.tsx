@@ -17,6 +17,7 @@ interface PaymentModalProps {
   preSelectedAmount?: string
   isFixedAmount?: boolean
   editTransaction?: Transaction | null
+  targetMonth?: string
 }
 
 interface MemberOption {
@@ -24,7 +25,7 @@ interface MemberOption {
   userName: string
 }
 
-export default function PaymentModal({ onClose, user, preSelectedMember, preSelectedReason, preSelectedAmount, isFixedAmount, editTransaction }: PaymentModalProps) {
+export default function PaymentModal({ onClose, user, preSelectedMember, preSelectedReason, preSelectedAmount, isFixedAmount, editTransaction, targetMonth }: PaymentModalProps) {
   const [amount, setAmount] = useState(preSelectedAmount || '30')
   const [reason, setReason] = useState(preSelectedReason || '')
   const [loading, setLoading] = useState(false)
@@ -93,13 +94,25 @@ export default function PaymentModal({ onClose, user, preSelectedMember, preSele
         return
       }
 
+      let txTimestamp = new Date().getTime()
+      let txDateStr = new Date().toISOString()
+
+      if (targetMonth && !editTransaction) {
+        // Force timestamp into the selected month securely (using the 15th of the month)
+        const targetDate = new Date(`${targetMonth} 15`)
+        if (!isNaN(targetDate.getTime())) {
+          txTimestamp = targetDate.getTime()
+          txDateStr = targetDate.toISOString()
+        }
+      }
+
       const txData: any = {
         userId: selectedUserId,
         userName: selectedUserName,
         amount: amountValue,
         reason,
-        timestamp: new Date().getTime(),
-        date: new Date().toISOString(),
+        timestamp: txTimestamp,
+        date: txDateStr,
         status: 'done',
         paymentMethod: 'cash',
       }
@@ -179,8 +192,27 @@ export default function PaymentModal({ onClose, user, preSelectedMember, preSele
             </div>
           )}
 
+          {targetMonth && isAdmin && !editTransaction && (
+            <div className="flex gap-2 bg-muted/30 p-1.5 rounded-lg border border-border mt-3">
+              <button
+                type="button"
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${amount === preSelectedAmount ? 'bg-destructive text-destructive-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}
+                onClick={() => setAmount(preSelectedAmount || '130')}
+              >
+                With Fine
+              </button>
+              <button
+                type="button"
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${amount === (parseFloat(preSelectedAmount || '130') - 100).toString() ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}
+                onClick={() => setAmount((parseFloat(preSelectedAmount || '130') - 100).toString())}
+              >
+                Without Fine
+              </button>
+            </div>
+          )}
+
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2 mt-4">
               Amount (₹)
             </label>
             <Input

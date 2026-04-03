@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { query, collection, orderBy, onSnapshot } from "firebase/firestore"
+import { query, collection, orderBy, onSnapshot, deleteDoc, doc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import type { Transaction, User } from "@/lib/types"
 import { useThemeLanguage } from "@/lib/use-theme-language"
@@ -316,12 +316,14 @@ export default function MainFeed({ user }: { user: any }) {
                       </div>
                       <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-auto">
                         <span className="text-xs text-destructive font-bold">₹{monthlyAmount + 100} due</span>
-                        <button
-                          onClick={() => setPaymentTarget({ userId: id, userName: member.displayName })}
-                          className="text-xs font-bold text-accent-foreground bg-accent hover:bg-accent/80 px-2 py-1 rounded transition-colors"
-                        >
-                          + Add
-                        </button>
+                        {(isAdmin || user?.uid === id) && (
+                          <button
+                            onClick={() => setPaymentTarget({ userId: id, userName: member.displayName })}
+                            className="text-xs font-bold text-accent-foreground bg-accent hover:bg-accent/80 px-2 py-1 rounded transition-colors"
+                          >
+                            + Add
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -344,7 +346,18 @@ export default function MainFeed({ user }: { user: any }) {
               <p className="text-sm sm:text-base text-muted-foreground">No transactions yet. Add your first payment!</p>
             </div>
           ) : (
-            <TransactionFeed transactions={transactions} isAdmin={isAdmin} onEdit={(txn) => setEditTarget(txn)} />
+            <TransactionFeed
+              transactions={transactions}
+              isAdmin={isAdmin}
+              onEdit={(txn) => setEditTarget(txn)}
+              onDelete={async (txnId) => {
+                try {
+                  await deleteDoc(doc(db, "transactions", txnId))
+                } catch (err) {
+                  console.error("Failed to delete transaction", err)
+                }
+              }}
+            />
           )}
         </div>
       </main>
@@ -375,9 +388,10 @@ export default function MainFeed({ user }: { user: any }) {
           onClose={() => setPaymentTarget(null)}
           user={user}
           preSelectedMember={paymentTarget}
-          preSelectedReason={`Monthly dues ${prevMonth} + Fine`}
+          preSelectedReason={`Monthly dues ${prevMonth}`}
           preSelectedAmount={(monthlyAmount + 100).toString()}
           isFixedAmount={true}
+          targetMonth={prevMonth}
         />
       )}
       {editTarget && (

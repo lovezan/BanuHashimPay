@@ -298,12 +298,14 @@ export default function UnpaidPage() {
                         <span className="text-xs font-bold text-destructive bg-destructive/10 px-2 py-1 rounded">
                           ₹{monthlyAmount + 100} due
                         </span>
-                        <button
-                          onClick={() => setPaymentTarget({ userId: id, userName: member.displayName })}
-                          className="text-xs font-bold text-accent-foreground bg-accent hover:bg-accent/80 px-2 py-1 rounded transition-colors"
-                        >
-                          + Add
-                        </button>
+                        {(isAdmin || user?.uid === id) && (
+                          <button
+                            onClick={() => setPaymentTarget({ userId: id, userName: member.displayName })}
+                            className="text-xs font-bold text-accent-foreground bg-accent hover:bg-accent/80 px-2 py-1 rounded transition-colors"
+                          >
+                            + Add
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -383,9 +385,10 @@ export default function UnpaidPage() {
           onClose={() => setPaymentTarget(null)}
           user={user}
           preSelectedMember={paymentTarget}
-          preSelectedReason={`Monthly dues ${selectedMonth} + Fine`}
+          preSelectedReason={`Monthly dues ${selectedMonth}`}
           preSelectedAmount={(monthlyAmount + 100).toString()}
           isFixedAmount={true}
+          targetMonth={selectedMonth}
         />
       )}
       {editTarget && (
