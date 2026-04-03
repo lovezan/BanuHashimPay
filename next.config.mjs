@@ -8,19 +8,13 @@ const nextConfig = {
   },
 };
 
-// PWA will work with manifest.json and the install prompt component
-// To enable full PWA features with service worker, install next-pwa:
-// npm install next-pwa
-// Then uncomment the code below:
-//
-// import withPWA from 'next-pwa';
-// const config = withPWA({
-//   dest: 'public',
-//   disable: process.env.NODE_ENV === 'development',
-//   register: true,
-//   skipWaiting: true,
-//   sw: 'sw.js',
-// })(nextConfig);
-// export default config;
+import withPWAInit from '@ducanh2912/next-pwa';
 
-export default nextConfig;
+const withPWA = withPWAInit({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true,
+});
+
+export default withPWA(nextConfig);

@@ -4,7 +4,6 @@ import { Analytics } from '@vercel/analytics/next'
 import ThemeLanguageProvider from '@/components/theme-language-provider'
 import { AdminModeProvider } from '@/lib/admin-context'
 import PWAInstallPrompt from '@/components/pwa-install-prompt'
-import PWAServiceWorker from '@/components/pwa-service-worker'
 import './globals.css'
 
 const _playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-serif' })
@@ -58,7 +57,6 @@ export default function RootLayout({
           <AdminModeProvider>
           {children}
           <PWAInstallPrompt />
-          <PWAServiceWorker />
           <Analytics />
           </AdminModeProvider>
         </ThemeLanguageProvider>

@@ -380,6 +380,15 @@ export default function MainFeed({ user }: { user: any }) {
           isFixedAmount={true}
         />
       )}
+      {editTarget && (
+        <PaymentModal
+          onClose={() => setEditTarget(null)}
+          user={user}
+          editTransaction={editTarget}
+          preSelectedAmount={editTarget.amount.toString()}
+          preSelectedReason={editTarget.reason}
+        />
+      )}
       {showQRModal && <QRModal onClose={() => setShowQRModal(false)} user={user} />}
     </div>
   )

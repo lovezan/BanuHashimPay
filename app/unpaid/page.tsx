@@ -52,7 +52,7 @@ export default function UnpaidPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedMonth, setSelectedMonth] = useState<string>("")
-  const [paymentTarget, setPaymentTarget] = useState<{ userId: string; userName: string; targetMonth: Date } | null>(null)
+  const [paymentTarget, setPaymentTarget] = useState<{ userId: string; userName: string } | null>(null)
   const [editTarget, setEditTarget] = useState<Transaction | null>(null)
   const router = useRouter()
   const { adminMode } = useAdminMode()
@@ -327,7 +327,7 @@ export default function UnpaidPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {paidMembers.map(([id, member]) => {
-                    const memberTotal = transactions
+                    const memberTransactions = transactions
                       .filter((txn) => {
                         const d =
                           typeof txn.timestamp === "string" || typeof txn.timestamp === "number" ? new Date(txn.timestamp) : (txn.timestamp as Date)
@@ -336,7 +336,9 @@ export default function UnpaidPage() {
                           txn.userId === id
                         )
                       })
-                      .reduce((sum, txn) => sum + txn.amount, 0)
+                      
+                    const memberTotal = memberTransactions.reduce((sum, txn) => sum + txn.amount, 0)
+                    const latestTxn = memberTransactions.sort((a, b) => b.timestamp - a.timestamp)[0] || null
 
                     return (
                       <div
@@ -384,6 +386,15 @@ export default function UnpaidPage() {
           preSelectedReason={`Monthly dues ${selectedMonth} + Fine`}
           preSelectedAmount={(monthlyAmount + 100).toString()}
           isFixedAmount={true}
+        />
+      )}
+      {editTarget && (
+        <PaymentModal
+          onClose={() => setEditTarget(null)}
+          user={user}
+          editTransaction={editTarget}
+          preSelectedAmount={editTarget.amount.toString()}
+          preSelectedReason={editTarget.reason}
         />
       )}
     </div>

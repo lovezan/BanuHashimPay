@@ -1,61 +1,23 @@
 {
-    "name": "Banuhashim Society Payment Book",
-    "short_name": "Banuhashim",
-    "description": "Comprehensive payment tracking system for Banuhashim Society. Track monthly contributions, donations, and member payments with ease.",
-    "start_url": "/",
-    "scope": "/",
-    "display": "standalone",
-    "orientation": "portrait-primary",
-    "theme_color": "#1a1a2e",
-    "background_color": "#ffffff",
-    "categories": ["finance", "productivity"],
-    "icons": [
-      {
-        "src": "/favicon-32x32.png",
-        "sizes": "32x32",
-        "type": "image/png",
-        "purpose": "any"
-      },
-      {
-        "src": "/android-chrome-192x192.png",
-        "sizes": "192x192",
-        "type": "image/png",
-        "purpose": "any maskable"
-      },
-      {
-        "src": "/android-chrome-512x512.png",
-        "sizes": "512x512",
-        "type": "image/png",
-        "purpose": "any maskable"
-      }
-    ],
-    "shortcuts": [
-      {
-        "name": "Add Payment",
-        "short_name": "Payment",
-        "description": "Quickly add a new payment or donation",
-        "url": "/?action=add-payment",
-        "icons": [
-          {
-            "src": "/android-chrome-192x192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-          }
-        ]
-      },
-      {
-        "name": "View Directory",
-        "short_name": "Directory",
-        "description": "View all society members and leadership",
-        "url": "/directory",
-        "icons": [
-          {
-            "src": "/android-chrome-192x192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-          }
-        ]
-      }
-    ]
-  }
-  
+  "name": "BanuHashim Society Pay",
+  "short_name": "BH Pay",
+  "description": "Progressive Web Application for BanuHashim Society management and tracking.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "/icon512_maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon512_rounded.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

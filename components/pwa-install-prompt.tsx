@@ -1,97 +1,102 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from "react"
+import { Download, X } from "lucide-react"
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
-
-export default function PWAInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [showInstallButton, setShowInstallButton] = useState(false)
-  const [isInstalled, setIsInstalled] = useState(false)
+export default function PwaInstallPrompt() {
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [showPrompt, setShowPrompt] = useState(false)
 
   useEffect(() => {
-    // Check if app is already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true)
+    // Check if app is already installed or prompt was recently dismissed
+    const isDismissed = localStorage.getItem("pwa-prompt-dismissed")
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches
+
+    if (isStandalone || isDismissed === "true") {
       return
     }
 
-    // Check if running as PWA
-    if ((window.navigator as any).standalone === true) {
-      setIsInstalled(true)
-      return
-    }
-
-    const handler = (e: Event) => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      // Prevent Chrome 67 and earlier from automatically showing the prompt
       e.preventDefault()
-      setDeferredPrompt(e as BeforeInstallPromptEvent)
-      setShowInstallButton(true)
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e)
+      setShowPrompt(true)
     }
 
-    window.addEventListener('beforeinstallprompt', handler)
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handler)
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
     }
   }, [])
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return
-
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-
-    if (outcome === 'accepted') {
-      setShowInstallButton(false)
-      setIsInstalled(true)
+    if (!deferredPrompt) {
+      return
     }
-
+    // Show the install prompt
+    deferredPrompt.prompt()
+    // Wait for the user to respond to the prompt
+    const { outcome } = await deferredPrompt.userChoice
+    if (outcome === "accepted") {
+      setShowPrompt(false)
+    }
+    // We've used the prompt, and can't use it again, throw it away
     setDeferredPrompt(null)
   }
 
-  if (isInstalled || !showInstallButton) {
+  const handleDismiss = () => {
+    setShowPrompt(false)
+    // Remember the user's choice for a while (e.g., 7 days or indefinitely)
+    localStorage.setItem("pwa-prompt-dismissed", "true")
+  }
+
+  if (!showPrompt) {
     return null
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-sm z-50">
-      <div className="bg-card border border-border rounded-lg p-4 shadow-lg">
-        <div className="flex items-start gap-3">
-          <div className="flex-1">
-            <h3 className="font-semibold text-foreground mb-1">Install App</h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              Install Banuhashim Society Payment Book for quick access and offline support.
+    <div className="fixed bottom-24 sm:bottom-6 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+      <div className="bg-gradient-to-br from-card to-card/95 border-2 border-accent/30 rounded-xl shadow-2xl p-4 sm:p-5 relative overflow-hidden group hover:border-accent/50 transition-colors">
+        {/* Glow effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-accent/10 to-primary/10 opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+        
+        <button 
+          onClick={handleDismiss}
+          className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors p-1"
+          aria-label="Dismiss"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-primary flex items-center justify-center flex-shrink-0 shadow-inner">
+            <span className="text-white font-bold text-xl font-serif">B</span>
+          </div>
+          <div className="flex-1 min-w-0 pr-4">
+            <h3 className="text-sm font-bold text-foreground mb-1">Install Banuhashim Pay</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+              Add our app to your home screen for quick access and offline tracking.
             </p>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={handleInstallClick}
-                className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors text-sm font-medium"
+                className="flex items-center gap-1.5 bg-accent hover:bg-accent/90 text-accent-foreground px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md hover:shadow-lg active:scale-95"
               >
-                Install
+                <Download className="w-3.5 h-3.5" />
+                Install App
               </button>
               <button
-                onClick={() => setShowInstallButton(false)}
-                className="px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors text-sm font-medium"
+                onClick={handleDismiss}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
               >
-                Later
+                Maybe later
               </button>
             </div>
           </div>
-          <button
-            onClick={() => setShowInstallButton(false)}
-            className="text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Close"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
       </div>
     </div>
   )
 }
-

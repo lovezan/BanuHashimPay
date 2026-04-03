@@ -16,6 +16,7 @@ interface PaymentModalProps {
   preSelectedReason?: string
   preSelectedAmount?: string
   isFixedAmount?: boolean
+  editTransaction?: Transaction | null
 }
 
 interface MemberOption {
@@ -23,7 +24,7 @@ interface MemberOption {
   userName: string
 }
 
-export default function PaymentModal({ onClose, user, preSelectedMember, preSelectedReason, preSelectedAmount, isFixedAmount }: PaymentModalProps) {
+export default function PaymentModal({ onClose, user, preSelectedMember, preSelectedReason, preSelectedAmount, isFixedAmount, editTransaction }: PaymentModalProps) {
   const [amount, setAmount] = useState(preSelectedAmount || '30')
   const [reason, setReason] = useState(preSelectedReason || '')
   const [loading, setLoading] = useState(false)
@@ -107,7 +108,11 @@ export default function PaymentModal({ onClose, user, preSelectedMember, preSele
         txData.addedBy = user.email
       }
 
-      await addDoc(collection(db, 'transactions'), txData)
+      if (editTransaction) {
+        await updateDoc(doc(db, 'transactions', editTransaction.id), txData)
+      } else {
+        await addDoc(collection(db, 'transactions'), txData)
+      }
 
       onClose()
     } catch (err: any) {
