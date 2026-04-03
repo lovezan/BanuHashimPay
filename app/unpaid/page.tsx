@@ -11,6 +11,7 @@ import Link from "next/link"
 import PaymentModal from "@/components/payment-modal"
 import { isSuperAdmin } from "@/lib/admin"
 import { useAdminMode } from "@/lib/admin-context"
+import { useGlobalSettings } from "@/hooks/use-global-settings"
 
 function monthKey(date: Date) {
   return date.toLocaleString("default", { month: "long", year: "numeric" })
@@ -29,7 +30,7 @@ function getCompletedMonths(transactions: Transaction[]): Date[] {
   // If we have transactions older than that, extend back to them
   if (transactions.length > 0) {
     const txnDates = transactions.map((t) => {
-      const d = typeof t.timestamp === "string" ? new Date(t.timestamp) : (t.timestamp as Date)
+      const d = typeof t.timestamp === "string" || typeof t.timestamp === "number" ? new Date(t.timestamp) : (t.timestamp as Date)
       return new Date(d.getFullYear(), d.getMonth(), 1)
     })
     const txnEarliest = new Date(Math.min(...txnDates.map((d) => d.getTime())))
@@ -55,6 +56,7 @@ export default function UnpaidPage() {
   const router = useRouter()
   const { adminMode } = useAdminMode()
   const isAdmin = isSuperAdmin(user?.email) && adminMode
+  const { monthlyAmount, loading: settingsLoading } = useGlobalSettings()
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -128,7 +130,7 @@ export default function UnpaidPage() {
   const paidUserIds = new Set(
     transactions
       .filter((txn) => {
-        const d = typeof txn.timestamp === "string" ? new Date(txn.timestamp) : (txn.timestamp as Date)
+        const d = typeof txn.timestamp === "string" || typeof txn.timestamp === "number" ? new Date(txn.timestamp) : (txn.timestamp as Date)
         return d.toLocaleString("default", { month: "long", year: "numeric" }) === selectedMonth
       })
       .map((txn) => txn.userId)
@@ -139,12 +141,12 @@ export default function UnpaidPage() {
 
   const collectedAmount = transactions
     .filter((txn) => {
-      const d = typeof txn.timestamp === "string" ? new Date(txn.timestamp) : (txn.timestamp as Date)
+      const d = typeof txn.timestamp === "string" || typeof txn.timestamp === "number" ? new Date(txn.timestamp) : (txn.timestamp as Date)
       return d.toLocaleString("default", { month: "long", year: "numeric" }) === selectedMonth
     })
     .reduce((sum, txn) => sum + txn.amount, 0)
 
-  const expectedAmount = allMembers.length * 30
+  const expectedAmount = allMembers.length * monthlyAmount
   const collectionRate = expectedAmount > 0 ? Math.min((collectedAmount / expectedAmount) * 100, 100) : 0
 
   return (
@@ -164,7 +166,7 @@ export default function UnpaidPage() {
                 Unpaid Tracker
               </h1>
               <p className="text-sm text-muted-foreground">
-                Month-by-month view of who has and hasn't paid their ₹30 contribution.
+                Month-by-month view of who has and hasn't paid their ₹{monthlyAmount} contribution.
                 Current month is excluded — only completed months are tracked.
               </p>
             </div>
@@ -213,7 +215,7 @@ export default function UnpaidPage() {
           </div>
         </div>
 
-        {loading ? (
+        {loading || settingsLoading ? (
           <div className="text-center py-12">
             <div className="w-8 h-8 border-2 border-muted-foreground border-t-accent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading...</p>
@@ -292,18 +294,17 @@ export default function UnpaidPage() {
                         <p className="text-xs text-muted-foreground capitalize">{member.role}</p>
                         <p className="text-xs text-muted-foreground truncate">{member.email}</p>
                       </div>
-                      {isAdmin ? (
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <span className="text-xs font-bold text-destructive bg-destructive/10 px-2 py-1 rounded">
+                          ₹{monthlyAmount + 100} due
+                        </span>
                         <button
                           onClick={() => setPaymentTarget({ userId: id, userName: member.displayName })}
-                          className="flex-shrink-0 text-xs font-bold text-accent-foreground bg-accent hover:bg-accent/80 px-2 py-1.5 rounded transition-colors"
+                          className="text-xs font-bold text-accent-foreground bg-accent hover:bg-accent/80 px-2 py-1 rounded transition-colors"
                         >
                           + Add
                         </button>
-                      ) : (
-                        <span className="text-xs font-bold text-destructive bg-destructive/10 px-2 py-1 rounded flex-shrink-0">
-                          ₹30 due
-                        </span>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -329,7 +330,7 @@ export default function UnpaidPage() {
                     const memberTotal = transactions
                       .filter((txn) => {
                         const d =
-                          typeof txn.timestamp === "string" ? new Date(txn.timestamp) : (txn.timestamp as Date)
+                          typeof txn.timestamp === "string" || typeof txn.timestamp === "number" ? new Date(txn.timestamp) : (txn.timestamp as Date)
                         return (
                           d.toLocaleString("default", { month: "long", year: "numeric" }) === selectedMonth &&
                           txn.userId === id
@@ -367,7 +368,9 @@ export default function UnpaidPage() {
           onClose={() => setPaymentTarget(null)}
           user={user}
           preSelectedMember={paymentTarget}
-          preSelectedReason={`Monthly dues ${selectedMonth}`}
+          preSelectedReason={`Monthly dues ${selectedMonth} + Fine`}
+          preSelectedAmount={(monthlyAmount + 100).toString()}
+          isFixedAmount={true}
         />
       )}
     </div>

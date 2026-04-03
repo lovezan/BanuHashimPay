@@ -13,6 +13,8 @@ interface PaymentModalProps {
   user: any
   preSelectedMember?: { userId: string; userName: string }
   preSelectedReason?: string
+  preSelectedAmount?: string
+  isFixedAmount?: boolean
 }
 
 interface MemberOption {
@@ -20,8 +22,8 @@ interface MemberOption {
   userName: string
 }
 
-export default function PaymentModal({ onClose, user, preSelectedMember, preSelectedReason }: PaymentModalProps) {
-  const [amount, setAmount] = useState('30')
+export default function PaymentModal({ onClose, user, preSelectedMember, preSelectedReason, preSelectedAmount, isFixedAmount }: PaymentModalProps) {
+  const [amount, setAmount] = useState(preSelectedAmount || '30')
   const [reason, setReason] = useState(preSelectedReason || '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -89,7 +91,7 @@ export default function PaymentModal({ onClose, user, preSelectedMember, preSele
         return
       }
 
-      await addDoc(collection(db, 'transactions'), {
+      const txData: any = {
         userId: selectedUserId,
         userName: selectedUserName,
         amount: amountValue,
@@ -98,8 +100,13 @@ export default function PaymentModal({ onClose, user, preSelectedMember, preSele
         date: new Date().toISOString(),
         status: 'done',
         paymentMethod: 'cash',
-        addedBy: isAdmin ? user.email : undefined,
-      })
+      }
+
+      if (isAdmin) {
+        txData.addedBy = user.email
+      }
+
+      await addDoc(collection(db, 'transactions'), txData)
 
       onClose()
     } catch (err: any) {
@@ -175,6 +182,7 @@ export default function PaymentModal({ onClose, user, preSelectedMember, preSele
               step="0.01"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              disabled={isFixedAmount && !isAdmin}
               placeholder="0.00"
               className="bg-background border-border text-foreground"
             />

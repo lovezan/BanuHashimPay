@@ -13,6 +13,7 @@ import TransactionFeed from "./transaction-feed"
 import Link from "next/link"
 import { isSuperAdmin } from "@/lib/admin"
 import { useAdminMode } from "@/lib/admin-context"
+import { useGlobalSettings } from "@/hooks/use-global-settings"
 
 export default function MainFeed({ user }: { user: any }) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -25,6 +26,12 @@ export default function MainFeed({ user }: { user: any }) {
   const isAdmin = isSuperAdmin(user?.email) && adminMode
   const { language } = useThemeLanguage()
   const t = getTranslations(language)
+  const { monthlyAmount, updateMonthlyAmount } = useGlobalSettings()
+  const [editAmount, setEditAmount] = useState("")
+
+  useEffect(() => {
+    setEditAmount(monthlyAmount.toString())
+  }, [monthlyAmount])
 
   useEffect(() => {
     const q = query(collection(db, "transactions"), orderBy("timestamp", "desc"))
@@ -85,8 +92,8 @@ export default function MainFeed({ user }: { user: any }) {
   const paidLastMonth = new Set(
     transactions
       .filter((txn) => {
-        const txnDate = typeof txn.timestamp === "string" ? new Date(txn.timestamp) : txn.timestamp
-        return txnDate.toLocaleString("default", { month: "long", year: "numeric" }) === prevMonth
+        const txnDate = typeof txn.timestamp === "string" || typeof txn.timestamp === "number" ? new Date(txn.timestamp) : txn.timestamp as Date
+        return (txnDate as Date).toLocaleString("default", { month: "long", year: "numeric" }) === prevMonth
       })
       .map((txn) => txn.userId)
   )
@@ -95,8 +102,8 @@ export default function MainFeed({ user }: { user: any }) {
 
   const monthlyTotal = transactions
     .filter((txn) => {
-      const txnDate = typeof txn.timestamp === "string" ? new Date(txn.timestamp) : txn.timestamp
-      const txnMonth = txnDate.toLocaleString("default", { month: "long", year: "numeric" })
+      const txnDate = typeof txn.timestamp === "string" || typeof txn.timestamp === "number" ? new Date(txn.timestamp) : txn.timestamp as Date
+      const txnMonth = (txnDate as Date).toLocaleString("default", { month: "long", year: "numeric" })
       return txnMonth === currentMonth
     })
     .reduce((sum, txn) => sum + txn.amount, 0)
@@ -121,7 +128,20 @@ export default function MainFeed({ user }: { user: any }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3 bg-gradient-to-br from-accent/10 to-accent/5 border border-accent/30 rounded-lg hover:border-accent/50 transition-colors">
                   <p className="text-xs sm:text-sm text-muted-foreground mb-1">Monthly Requirement</p>
-                  <p className="text-lg sm:text-xl font-bold text-accent">₹30</p>
+                  {isAdmin ? (
+                    <div className="flex items-center">
+                       <span className="text-lg sm:text-xl font-bold text-accent">₹</span>
+                       <input 
+                         type="number"
+                         value={editAmount}
+                         onChange={(e) => setEditAmount(e.target.value)}
+                         onBlur={(e) => updateMonthlyAmount(Number(e.target.value) || monthlyAmount)}
+                         className="w-16 bg-transparent border-b border-accent/30 focus:border-accent outline-none text-lg sm:text-xl font-bold text-accent ml-0.5"
+                       />
+                    </div>
+                  ) : (
+                    <p className="text-lg sm:text-xl font-bold text-accent">₹{monthlyAmount}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 rounded-lg hover:border-primary/50 transition-colors">
                   <p className="text-xs sm:text-sm text-muted-foreground mb-1">System Purpose</p>
@@ -173,7 +193,7 @@ export default function MainFeed({ user }: { user: any }) {
             <ul className="space-y-2 text-sm sm:text-base text-muted-foreground">
               <li className="flex gap-3">
                 <span className="text-accent font-bold flex-shrink-0">•</span>
-                <span>Each member contributes ₹30 monthly for society operations</span>
+                <span>Each member contributes ₹{monthlyAmount} monthly for society operations</span>
               </li>
               <li className="flex gap-3">
                 <span className="text-accent font-bold flex-shrink-0">•</span>
@@ -216,7 +236,7 @@ export default function MainFeed({ user }: { user: any }) {
                     <div className="h-2.5 bg-background rounded-full overflow-hidden border border-accent/10">
                       <div
                         className="h-full bg-gradient-to-r from-accent via-accent to-accent/50 transition-all duration-1000"
-                        style={{ width: `${Math.min((monthlyTotal / 600) * 100, 100)}%` }}
+                        style={{ width: `${Math.min((monthlyTotal / (allMembers.length * monthlyAmount || 1)) * 100, 100)}%` }}
                       ></div>
                     </div>
                   </div>
@@ -277,7 +297,7 @@ export default function MainFeed({ user }: { user: any }) {
                     {allMembers.length} members haven't paid
                   </p>
                   <span className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded-full font-medium">
-                    ₹{(unpaidLastMonth.length * 30).toFixed(0)} pending
+                    ₹{(unpaidLastMonth.length * (monthlyAmount + 100)).toFixed(0)} pending
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -293,16 +313,15 @@ export default function MainFeed({ user }: { user: any }) {
                         <p className="text-sm font-medium text-foreground truncate">{member.displayName}</p>
                         <p className="text-xs text-muted-foreground capitalize">{member.role}</p>
                       </div>
-                      {isAdmin ? (
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-auto">
+                        <span className="text-xs text-destructive font-bold">₹{monthlyAmount + 100} due</span>
                         <button
                           onClick={() => setPaymentTarget({ userId: id, userName: member.displayName })}
-                          className="flex-shrink-0 text-xs font-bold text-accent-foreground bg-accent hover:bg-accent/80 px-2 py-1 rounded transition-colors"
+                          className="text-xs font-bold text-accent-foreground bg-accent hover:bg-accent/80 px-2 py-1 rounded transition-colors"
                         >
                           + Add
                         </button>
-                      ) : (
-                        <span className="ml-auto text-xs text-destructive font-bold flex-shrink-0">₹30 due</span>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -349,13 +368,15 @@ export default function MainFeed({ user }: { user: any }) {
         <span className="text-2xl sm:text-3xl font-light">+</span>
       </button>
 
-      {showModal && <PaymentModal onClose={() => setShowModal(false)} user={user} />}
+      {showModal && <PaymentModal onClose={() => setShowModal(false)} user={user} preSelectedAmount={monthlyAmount.toString()} />}
       {paymentTarget && (
         <PaymentModal
           onClose={() => setPaymentTarget(null)}
           user={user}
           preSelectedMember={paymentTarget}
-          preSelectedReason={`Monthly dues ${prevMonth}`}
+          preSelectedReason={`Monthly dues ${prevMonth} + Fine`}
+          preSelectedAmount={(monthlyAmount + 100).toString()}
+          isFixedAmount={true}
         />
       )}
       {showQRModal && <QRModal onClose={() => setShowQRModal(false)} user={user} />}
