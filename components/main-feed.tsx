@@ -112,7 +112,7 @@ export default function MainFeed({ user }: { user: any }) {
   const allTimeTotal = transactions.reduce((sum, txn) => sum + txn.amount, 0)
 
   return (
-    <div className="min-h-screen bg-background pb-20 sm:pb-0">
+    <div className="min-h-screen bg-background pb-40 sm:pb-32">
       <Navigation user={user} />
 
       <main className="max-w-4xl mx-auto px-4 py-4 sm:py-8">
@@ -375,7 +375,7 @@ export default function MainFeed({ user }: { user: any }) {
       {/* Floating Action Button - Bottom Right */}
       <button
         onClick={() => setShowModal(true)}
-        className="fixed bottom-6 right-6 flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-accent to-accent/80 text-accent-foreground rounded-full hover:from-accent/90 hover:to-accent transition-all shadow-lg hover:shadow-2xl z-30 active:scale-95 transform hover:scale-110"
+        className="fixed bottom-24 right-6 flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-accent to-accent/80 text-accent-foreground rounded-full hover:from-accent/90 hover:to-accent transition-all shadow-lg hover:shadow-2xl z-30 active:scale-95 transform hover:scale-110"
         title={t.payment.addPayment}
         aria-label={t.payment.addPayment}
       >

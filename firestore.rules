@@ -1,0 +1,50 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn()
+        && request.auth.token.email == 'talibhassan1122@gmail.com';
+    }
+
+    function isAshnaAgent() {
+      return isSignedIn()
+        && (
+          request.auth.uid == 'goh3KXAENwaOkofIqj0XzflY4gH2'
+          || request.auth.token.email == 'bilatnassah@gmail.com'
+        );
+    }
+
+    function isMember() {
+      return isSignedIn() && !isAshnaAgent();
+    }
+
+    // Super admin: full access to every collection
+    match /{document=**} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /transactions/{docId} {
+      allow read: if isSignedIn();
+      allow create: if isMember()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isMember()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isMember()
+        && request.auth.uid == userId;
+    }
+
+    match /settings/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
+    }
+  }
+}
