@@ -4,7 +4,6 @@ import { Analytics } from '@vercel/analytics/next'
 import ThemeLanguageProvider from '@/components/theme-language-provider'
 import { AdminModeProvider } from '@/lib/admin-context'
 import PWAInstallPrompt from '@/components/pwa-install-prompt'
-import AshnaAgentWidget from '@/components/ashna-agent-widget'
 import './globals.css'
 
 const _playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-serif' })
@@ -57,7 +56,6 @@ export default function RootLayout({
         <ThemeLanguageProvider>
           <AdminModeProvider>
           {children}
-          <AshnaAgentWidget />
           <PWAInstallPrompt />
           <Analytics />
           </AdminModeProvider>

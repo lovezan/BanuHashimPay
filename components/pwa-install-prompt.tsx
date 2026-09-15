@@ -57,7 +57,7 @@ export default function PwaInstallPrompt() {
   }
 
   return (
-    <div className="fixed bottom-44 sm:bottom-44 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+    <div className="fixed bottom-24 sm:bottom-6 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
       <div className="bg-gradient-to-br from-card to-card/95 border-2 border-accent/30 rounded-xl shadow-2xl p-4 sm:p-5 relative overflow-hidden group hover:border-accent/50 transition-colors">
         {/* Glow effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-accent/10 to-primary/10 opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
